@@ -711,10 +711,10 @@ DatabaseController.prototype.find = function(className, query, {
   acl,
   sort = {},
   count,
-} = {}) {
+} = {}, op) {
   let isMaster = acl === undefined;
   let aclGroup = acl || [];
-  let op = typeof query.objectId == 'string' && Object.keys(query).length === 1 ? 'get' : 'find';
+  op = op || (typeof query.objectId == 'string' && Object.keys(query).length === 1 ? 'get' : 'find');
   let classExists = true;
   return this.loadSchema()
   .then(schemaController => {

@@ -111,11 +111,11 @@ function RestQuery(config, auth, className, restWhere = {}, restOptions = {}, cl
 // Returns a promise for the response - an object with optional keys
 // 'results' and 'count'.
 // TODO: consolidate the replaceX functions
-RestQuery.prototype.execute = function() {
+RestQuery.prototype.execute = function(executeOptions) {
   return Promise.resolve().then(() => {
     return this.buildRestWhere();
   }).then(() => {
-    return this.runFind();
+    return this.runFind(executeOptions);
   }).then(() => {
     return this.runCount();
   }).then(() => {
@@ -385,13 +385,13 @@ RestQuery.prototype.replaceDontSelect = function() {
 
 // Returns a promise for whether it was successful.
 // Populates this.response with an object that only has 'results'.
-RestQuery.prototype.runFind = function() {
+RestQuery.prototype.runFind = function(options = {}) {
   if (this.findOptions.limit === 0) {
     this.response = {results: []};
     return Promise.resolve();
   }
   return this.config.database.find(
-    this.className, this.restWhere, this.findOptions).then((results) => {
+    this.className, this.restWhere, this.findOptions, options.op).then((results) => {
     if (this.className === '_User') {
       for (var result of results) {
         delete result.password;
@@ -479,7 +479,6 @@ function includePath(config, auth, response, path) {
     return response;
   }
   let pointersHash = {};
-  var objectIds = {};
   for (var pointer of pointers) {
     if (!pointer) {
       continue;
@@ -487,15 +486,15 @@ function includePath(config, auth, response, path) {
     let className = pointer.className;
     // only include the good pointers
     if (className) {
-      pointersHash[className] = pointersHash[className] || [];
-      pointersHash[className].push(pointer.objectId);
+      pointersHash[className] = pointersHash[className] || new Set();
+      pointersHash[className].add(pointer.objectId);
     }
   }
 
   let queryPromises = Object.keys(pointersHash).map((className) => {
-    var where = {'objectId': {'$in': pointersHash[className]}};
+    let where = {'objectId': {'$in': Array.from(pointersHash[className])}};
     var query = new RestQuery(config, auth, className, where);
-    return query.execute().then((results) => {
+    return query.execute({op: 'get'}).then((results) => {
       results.className = className;
       return Promise.resolve(results);
     })
