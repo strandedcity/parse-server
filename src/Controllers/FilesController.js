@@ -29,8 +29,7 @@ export class FilesController extends AdaptableController {
 
     filename = uuid.v4() + '_' + filename;
 
-    var location = this.adapter.getFileLocation(config, filename);
-    return this.adapter.createFile(filename, data, contentType).then(() => {
+    return this.adapter.createFile(filename, data, contentType).then((location) => {
       return Promise.resolve({
         url: location,
         name: filename
