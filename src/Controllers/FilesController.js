@@ -21,7 +21,7 @@ export class FilesController extends AdaptableController {
 
     if (!hasExtension && contentType && mime.extension(contentType)) {
       filename = filename + '.' + mime.extension(contentType);
-    } else if (hasExtension && !contentType) {
+    } else if (hasExtension) {
       contentType = mime.lookup(filename);
     }
 
